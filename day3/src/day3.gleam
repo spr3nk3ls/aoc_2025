@@ -6,21 +6,23 @@ import gleam/int
 import gleam/result
 
 pub fn main() -> Nil {
-  compute("example.txt")
-  io.println("")
-  compute("input.txt")
-  io.println("")
-  /// compute2("example.txt")
-  io.println("")
-  /// compute2("input.txt")
+  compute("example.txt", 2)
+  compute("input.txt", 2)
+  compute("example.txt", 12)
+  compute("input.txt", 12)
 }
 
-fn compute(filename: String) -> Nil {
+fn compute(filename: String, numbers: Int) -> Nil {
   case simplifile.read(filename) {
     Ok(contents) -> {
       let result = string.split(contents, "\n")
       |> list.map(to_ints)
-      |> list.map(get_joltage)
+      |> list.map(fn(ls){get_joltage(ls, numbers)})
+      |> list.map(
+          fn(l){
+            list.fold(l, 0, fn(n, acc){ 10*n + acc })
+          }
+        )
       |> list.fold(0, fn(n, acc) { acc + n })
 
       io.println(int.to_string(result))
@@ -41,23 +43,23 @@ fn to_ints(str: String) -> List(Int) {
   )
 }
 
-fn get_joltage(ls: List(Int)) -> Int {
+fn get_joltage(ls: List(Int), numbers: Int) -> List(Int) {
   let mx = ls
     |> list.reverse
-    |> list.rest
-    |> result.unwrap([0])
+    |> list.drop(numbers - 1)
     |> list.reverse
-    |> list.max(int.compare)
-    |> result.unwrap(0)
-
-  let mx2 = ls
-    |> split_on_pred(fn(x){x == mx})
-    |> fn(tup){ tup.1 }
     |> list.max(int.compare)
     |> result.unwrap(0)
   
-  /// io.println(int.to_string(mx*10 + mx2))
-  mx*10 + mx2
+  case numbers {
+    1 -> [mx]
+    _ -> {
+      let sublist = ls
+        |> split_on_pred(fn(x){x == mx})
+        |> fn(tup){ tup.1 }
+      [mx, ..get_joltage(sublist, numbers - 1)]
+    }
+  }
 }
 
 fn split_on_pred(xs: List(Int), pred: fn(Int) -> Bool)
